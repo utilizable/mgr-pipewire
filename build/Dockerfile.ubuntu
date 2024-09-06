@@ -80,7 +80,8 @@ ENV \
   PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
   DISABLE_RTKIT="y" \
   PIPEWIRE_DEBUG=E \
-  WIREPLUMBER_DEBUG=E
+  WIREPLUMBER_DEBUG=E \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session
 
 # -----------------------------------------------
 

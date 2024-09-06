@@ -11,9 +11,9 @@ trap _term SIGTERM SIGINT
 
 #################
 
-wait_for_lock_file "${XDG_RUNTIME_DIR}/dbus-session" 30 1  # For D-Bus session
+wait_for_lock_file "${XDG_RUNTIME_DIR}/pipewire-0.lock" 30 1  # For Pipewire session
 
-pipewire &
+pipewire-pulse &
 
 #################
 
