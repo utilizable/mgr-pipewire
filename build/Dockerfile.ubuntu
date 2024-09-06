@@ -1,0 +1,93 @@
+############################################################
+# Copyright (c) 2024 Utilizable 
+# Released under the MIT license
+# ----------------------------------------------------------
+# STRUCTURE:
+#
+# ├─utilizable/mgr-base
+#   ├─utilizable/mgr-pipewire
+#
+############################################################
+
+FROM ghcr.io/utilizable/mgr-base:0.3.0
+
+RUN \
+    echo "**** Install Pipewire ****" \
+    && \
+    echo "**** Update apt database ****" \
+      && apt-get update \
+    && \
+    echo "**** Install Tools ****" \
+      && apt-get install --no-install-recommends -y \          
+         software-properties-common \
+         curl \
+    && \
+    echo "**** Pipewire - PPA ****" \
+      && mkdir -p /etc/apt/trusted.gpg.d \
+      && chmod 0755 /etc/apt/trusted.gpg.d \
+      && curl -fsSL \
+        "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xFC43B7352BCC0EC8AF2EEB8B25088A0359807596" | \
+        gpg --batch --no-tty --dearmor -o /etc/apt/trusted.gpg.d/pipewire-debian-ubuntu-pipewire-upstream.gpg \
+    && \
+    echo "**** Pipewire - Sources ****" \      
+      && SOURCES_BASE="/etc/apt/sources.list.d/pipewire-debian-ubuntu" \
+      && UBUNTU_CODENAME="$(grep UBUNTU_CODENAME= /etc/os-release | cut -d= -f2 | tr -d '\"')" \
+      && mkdir -p /etc/apt/sources.list.d \
+      && chmod 0755 /etc/apt/sources.list.d \
+      && echo \
+        "deb https://ppa.launchpadcontent.net/pipewire-debian/pipewire-upstream/ubuntu \
+          ${UBUNTU_CODENAME} main" \
+           > "${SOURCES_BASE}-pipewire-upstream-${UBUNTU_CODENAME}.list" \
+    && \
+    echo "**** Wireplumber - Sources ****" \      
+      && SOURCES_BASE="/etc/apt/sources.list.d/pipewire-debian-ubuntu" \
+      && mkdir -p /etc/apt/sources.list.d \ 
+      && chmod 0755 /etc/apt/sources.list.d \ 
+      && echo \
+        "deb https://ppa.launchpadcontent.net/pipewire-debian/wireplumber-upstream/ubuntu \
+          ${UBUNTU_CODENAME} main" \
+           > "${SOURCES_BASE}-wireplumber-upstream-${UBUNTU_CODENAME}.list" \
+    && \
+    echo "**** Pipewire - Installation ****" \     
+      && apt-get update \
+      && apt-get install --no-install-recommends -y \
+        pipewire \
+        pipewire-alsa \
+        pipewire-audio-client-libraries \
+        pipewire-v4l2 \
+        pipewire-libcamera \
+        gstreamer1.0-pipewire \
+        libpipewire-0.3-modules \
+        wireplumber \
+        pulseaudio-utils \
+        dbus-x11 \
+        supervisor \
+    && \
+    echo "**** Section cleanup ****" \
+       && apt-get clean autoclean -y \
+       && apt-get autoremove -y \
+       && rm -rf \
+           /var/lib/apt/lists/* \
+           /var/tmp/* \
+           /tmp/*
+
+# -----------------------------------------------
+
+ENV \
+  PIPEWIRE_PORT=4000 \
+  PIPEWIRE_LATENCY="32/48000" \
+  PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
+  PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
+  DISABLE_RTKIT="y" \
+  PIPEWIRE_DEBUG=E \
+  WIREPLUMBER_DEBUG=E
+
+# -----------------------------------------------
+
+# Add FS overlay
+COPY overlay /
+RUN chmod +x /entrypoint.sh
+
+# Execute 
+SHELL ["/usr/bin/bash"]
+CMD ["/entrypoint.sh"]

@@ -1,0 +1,180 @@
+############################################################
+# Copyright (c) 2024 Utilizable 
+# Released under the MIT license
+# ----------------------------------------------------------
+# STRUCTURE:
+#
+# ├─utilizable/docker-base
+#   ├─utilizable/docker-egl
+#
+############################################################
+
+FROM ghcr.io/utilizable/docker-base:3.1.0
+
+RUN \
+    echo "**** Install Core (EGL) ****" \
+    && \
+    echo "**** Update apt database ****" \
+      && dpkg --add-architecture i386 \
+      && apt-get update \
+    && \
+    echo "**** Install tools ****" \
+      && apt-get install -y --no-install-recommends \
+          software-properties-common \
+          bash \
+          bash-completion \
+          curl \
+          git \
+          jq \
+          gnupg2 \
+          ca-certificates \
+    && \
+    echo "**** Install Intel media drivers and VAAPI ****" \
+      && apt-get install -y --no-install-recommends \
+          intel-media-va-driver-non-free \
+          i965-va-driver-shaders \
+          libva2 \
+    && \
+    echo "**** Install OpenGL libraries ****" \
+      && apt-get install -y --no-install-recommends \
+         libxau6 \
+         libxdmcp6 \
+         libxcb1 \
+         libxext6 \
+         libx11-6 \
+         libxv1 \
+         libxtst6 \
+         libdrm2 \
+         libegl1 \
+         libgl1 \
+         libopengl0 \
+         libgles1 \
+         libgles2 \
+         libglvnd0 \
+         libglx0 \
+         libglu1 \
+         libsm6  \
+    && \
+    echo "**** Install Nvidia libraries ****" \
+      && apt-get install -y --no-install-recommends \
+         libc6-dev \
+         libpci3 \
+         libelf-dev \
+         intel-gpu-tools \
+         nvtop \
+         va-driver-all \
+         i965-va-driver-shaders \
+         intel-media-va-driver-non-free \
+         va-driver-all:i386 \
+         i965-va-driver-shaders:i386 \
+         intel-media-va-driver-non-free:i386 \
+         libva2:i386 \
+         vdpau-driver-all:i386 \
+         mesa-vulkan-drivers:i386 \
+         libvulkan-dev:i386 \
+         libc6:i386 \
+         libxau6:i386 \
+         libxdmcp6:i386 \
+         libxcb1:i386 \
+         libxext6:i386 \
+         libx11-6:i386 \
+         libxv1:i386 \
+         libxtst6:i386 \
+         libdrm2:i386 \
+         libegl1:i386 \
+         libgl1:i386 \
+         libopengl0:i386 \
+         libgles1:i386 \
+         libgles2:i386 \
+         libglvnd0:i386 \
+         libglx0:i386 \
+         libglu1:i386 \
+         libsm6:i386 \
+         gcc \
+         meson \
+         gstreamer1.0-plugins-bad \
+         libffmpeg-nvenc-dev \
+         libva-dev \
+         libegl-dev \
+         libgstreamer-plugins-bad1.0-dev \
+    && \
+    echo "**** Install VirtualGL ****" \
+      && curl -fsSL https://packagecloud.io/dcommander/virtualgl/gpgkey | \
+         gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg \
+      && curl -X GET https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list \
+         -O --output-dir /etc/apt/sources.list.d \
+      && apt-get update \
+      && apt-get install -y --no-install-recommends \
+          virtualgl \
+          virtualgl32 \
+      && chmod u+s \
+          /usr/lib/libvglfaker.so \
+          /usr/lib/libvglfaker-nodl.so \
+          /usr/lib/libvglfaker-opencl.so \
+          /usr/lib/libdlfaker.so \
+          /usr/lib/libgefaker.so \
+      && chmod u+s \
+          /usr/lib32/libvglfaker.so \
+          /usr/lib32/libvglfaker-nodl.so \
+          /usr/lib32/libvglfaker-opencl.so \
+          /usr/lib32/libdlfaker.so \
+          /usr/lib32/libgefaker.so \
+      && chmod u+s \
+          /usr/lib/i386-linux-gnu/libvglfaker.so \
+          /usr/lib/i386-linux-gnu/libvglfaker-nodl.so \
+          /usr/lib/i386-linux-gnu/libvglfaker-opencl.so \
+          /usr/lib/i386-linux-gnu/libdlfaker.so \
+          /usr/lib/i386-linux-gnu/libgefaker.so \
+    && \
+    echo "**** Install NVIDIA VAAPI ****" \
+      && NVIDIA_VAAPI_DRIVER_REPO="https://api.github.com/repos/elFarto/nvidia-vaapi-driver" \
+      && NVIDIA_VAAPI_DRIVER_TARBALL="$( \
+            curl -fsSL \
+            "${NVIDIA_VAAPI_DRIVER_REPO}/releases/latest" | \
+            jq -r '.tarball_url' \
+         )" \
+      && mkdir /tmp/nvidia-vaapi-driver \
+      && curl -fsSL "${NVIDIA_VAAPI_DRIVER_TARBALL}" | \ 
+         tar zxf - -C /tmp/nvidia-vaapi-driver --strip-components 1 \ 
+      && cd /tmp/nvidia-vaapi-driver \
+      && meson setup build \
+      && meson install -C build \
+      && echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
+      && echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf \
+    && \
+    echo "**** OpenCL Configuration ****" \
+      && mkdir -pm755 /etc/OpenCL/vendors \
+      && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd \
+    && \
+    echo "**** Vulkan Configuration ****" \
+      && VULKAN_API_VERSION=$( \
+           dpkg -s libvulkan1 | \
+           grep -oP 'Version: [0-9|\.]+' | \
+           grep -oP '[0-9]+(\.[0-9]+)(\.[0-9]+)' \
+         ) \
+      && mkdir -pm 755 /etc/vulkan/icd.d/ \
+      && echo -e "{ \n\
+                    \"file_format_version\" : \"1.0.0\",\n\
+                    \"ICD\": { \n\
+                      \"library_path\": \"libGLX_nvidia.so.0\", \n\
+                      \"api_version\" : \"${VULKAN_API_VERSION}\"\n\
+                    } \n\
+                  }" \
+         > /etc/vulkan/icd.d/nvidia_icd.json \
+    && \
+    echo "**** EGL Configuration **** " \
+      && mkdir -pm 755 /usr/share/glvnd/egl_vendor.d/ \
+      && echo -e "{ \n\
+                    \"file_format_version\" : \"1.0.0\", \n\
+                    \"ICD\": { \n\
+                      \"library_path\": \"libEGL_nvidia.so.0\" \n\
+                    } \n\
+                  }" \
+         > /usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+    echo "**** Section cleanup ****" \
+      && apt-get clean autoclean -y \
+      && apt-get autoremove -y \
+      && rm -rf \
+          /var/lib/apt/lists/* \
+          /var/tmp/* \
+          /tmp/*

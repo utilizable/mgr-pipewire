@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+source /usr/bin/common-functions.sh
+
+# CATCH TERM SIGNAL:
+_term() {
+    kill -TERM "$pid" 2>/dev/null
+}
+trap _term SIGTERM SIGINT
+
+wait_for_dbus
+
+#################
+
+pipewire &
+
+wireplumber &
+
+pipewire-pulse &
+
+#################
+
+pid=$!
+
+# WAIT FOR CHILD PROCESS:
+wait "$pid"
