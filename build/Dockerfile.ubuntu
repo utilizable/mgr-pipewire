@@ -11,6 +11,9 @@
 
 FROM ghcr.io/utilizable/mgr-base:0.3.0
 
+# -----------------------------------------------
+# Core Installation
+
 RUN \
     echo "**** Install Pipewire ****" \
     && \
@@ -72,16 +75,21 @@ RUN \
            /tmp/*
 
 # -----------------------------------------------
+# Static configuration
+
+ENV \
+  PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
+  PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session
+
+# -----------------------------------------------
+# Dynamic configuration
 
 ENV \
   PIPEWIRE_PORT=4000 \
-  PIPEWIRE_LATENCY="32/48000" \
-  PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
-  PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
-  DISABLE_RTKIT="y" \
   PIPEWIRE_DEBUG=E \
   WIREPLUMBER_DEBUG=E \
-  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session
+  PIPEWIRE_LATENCY="32/48000"
 
 # -----------------------------------------------
 
