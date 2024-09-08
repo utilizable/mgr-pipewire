@@ -9,7 +9,7 @@
 #
 ############################################################
 
-FROM ghcr.io/utilizable/mgr-base:0.3.0
+FROM ghcr.io/utilizable/mgr-base:1.0.0
 
 # -----------------------------------------------
 # Core Installation
@@ -77,37 +77,35 @@ RUN \
 # -----------------------------------------------
 # Arguments 
 
-ARG PIPEWIRE_PORT=4713 \
-    PIPEWIRE_DEBUG=E \
-    WIREPLUMBER_DEBUG=E \
-    PIPEWIRE_LATENCY="32/48000" \
-    SUPERVISOR_PORT=9001
+ARG \
+    PIPEWIRE_PORT="8080" \
+    SUPERVISOR_PORT="9091"
 
 # -----------------------------------------------
-# Static configuration
+# Configuration - Pipewire (defaults)
 
 ENV \
-  PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
-  PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
-  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session \
-	DISABLE_RTKIT=y
+    PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
+    PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
+    DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session \
+	  DISABLE_RTKIT=y \
+    PIPEWIRE_PORT=${PIPEWIRE_PORT} \
+    PIPEWIRE_DEBUG="E" \
+    WIREPLUMBER_DEBUG="E" \
+    PIPEWIRE_LATENCY="32/48000" 
 
 # -----------------------------------------------
-# Dynamic configuration
+# Configuration - Miscs 
 
 ENV \
-  PIPEWIRE_PORT=${PIPEWIRE_PORT} \
-  PIPEWIRE_DEBUG=${PIPEWIRE_DEBUG} \
-  WIREPLUMBER_DEBUG=${WIREPLUMBER_DEBUG} \
-  PIPEWIRE_LATENCY=${PIPEWIRE_LATENCY} \
-  SUPERVISOR_PORT=${SUPERVISOR_PORT}
+    SUPERVISOR_PORT=${SUPERVISOR_PORT}
 
 # -----------------------------------------------
 # Expose ports
 
 EXPOSE \
-	${PIPEWIRE_PORT} \
-	${SUPERVISOR_PORT} 
+	  ${PIPEWIRE_PORT} \
+    ${SUPERVISOR_PORT}
 
 # -----------------------------------------------
 
