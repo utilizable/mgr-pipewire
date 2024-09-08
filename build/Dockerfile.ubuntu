@@ -75,21 +75,39 @@ RUN \
            /tmp/*
 
 # -----------------------------------------------
+# Arguments 
+
+ARG PIPEWIRE_PORT=4713 \
+    PIPEWIRE_DEBUG=E \
+    WIREPLUMBER_DEBUG=E \
+    PIPEWIRE_LATENCY="32/48000" \
+    SUPERVISOR_PORT=9001
+
+# -----------------------------------------------
 # Static configuration
 
 ENV \
   PIPEWIRE_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
   PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}" \
-  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session
+  DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/dbus-session \
+	DISABLE_RTKIT=y
 
 # -----------------------------------------------
 # Dynamic configuration
 
 ENV \
-  PIPEWIRE_PORT=4000 \
-  PIPEWIRE_DEBUG=E \
-  WIREPLUMBER_DEBUG=E \
-  PIPEWIRE_LATENCY="32/48000"
+  PIPEWIRE_PORT=${PIPEWIRE_PORT} \
+  PIPEWIRE_DEBUG=${PIPEWIRE_DEBUG} \
+  WIREPLUMBER_DEBUG=${WIREPLUMBER_DEBUG} \
+  PIPEWIRE_LATENCY=${PIPEWIRE_LATENCY} \
+  SUPERVISOR_PORT=${SUPERVISOR_PORT}
+
+# -----------------------------------------------
+# Expose ports
+
+EXPOSE \
+	${PIPEWIRE_PORT} \
+	${SUPERVISOR_PORT} 
 
 # -----------------------------------------------
 

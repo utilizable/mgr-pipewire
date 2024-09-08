@@ -10,7 +10,6 @@ wait_for_lock_file() {
     echo "Waiting for lock file: $lock_file_path ..."
     while [ $elapsed_time -lt $timeout ]; do
         if [ -e "$lock_file_path" ]; then
-            echo "Lock file found: $lock_file_path."
             return 0
         fi
         sleep $sleep_interval

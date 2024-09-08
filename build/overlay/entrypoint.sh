@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir "${XDG_RUNTIME_DIR}/log"
+
 # Execute all container init scripts
 for init_script in /etc/cont-init.d/*.sh; do
     echo "${init_script}"
